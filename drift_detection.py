@@ -17,7 +17,8 @@ from src.common.constants import (
     LOG_FILEPATH,
 )
 from src.common.logger import handle_exception, set_logger
-from src.preprocess import CAT_FEATURES, preprocess_pipeline
+# from src.preprocess import CAT_FEATURES, preprocess_pipeline
+CAT_FEATURES = []
 
 logger = set_logger(os.path.join(LOG_FILEPATH, "logs.log"))
 sys.excepthook = handle_exception
@@ -25,7 +26,7 @@ warnings.filterwarnings(action="ignore")
 
 
 DATE = datetime.now().strftime("%Y%m%d")
-LABEL_NAME = "sharing_bike"
+LABEL_NAME = "count"
 model = joblib.load(os.path.join(ARTIFACT_PATH, "model.pkl"))
 
 
@@ -65,13 +66,15 @@ def model_drift_detection(
 ) -> None:
     def get_xy(df: pd.DataFrame):
         y = np.log1p(df[LABEL_NAME])
-        x = preprocess_pipeline.fit_transform(
-            X=df.drop([LABEL_NAME], axis=1), y=y
-        )
+        # x = preprocess_pipeline.fit_transform(
+        #     X=df.drop([LABEL_NAME], axis=1), y=y
+        # )
+        x = df.drop([LABEL_NAME])
 
         return x, y
 
     x_train, y_train = get_xy(train_df)
+    print(x_train)
     x_new, y_new = get_xy(new_df)
 
     train_set = Dataset(
@@ -97,8 +100,8 @@ def model_drift_detection(
 
 
 def main():
-    train_df = load_data(filename="house_rent_train.csv")
-    new_df = load_data(filename="house_rent_new.csv")
+    train_df = load_data(filename="bike_sharing_train.csv")
+    new_df = load_data(filename="bike_sharing_new.csv")
 
     logger.debug(f"{train_df.info()}")
     logger.debug(f"{new_df.info()}")
